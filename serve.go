@@ -3,7 +3,6 @@ package vtls
 import (
 	"crypto/tls"
 	"fmt"
-	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -16,50 +15,61 @@ var (
 	certTime = time.Minute
 )
 
+type certCache struct {
+	m   map[string]*tls.Certificate
+	mut *sync.RWMutex
+	crt Certifier
+}
+
+func newCertCache(crt Certifier) *certCache {
+	return &certCache{
+		m:   map[string]*tls.Certificate{},
+		mut: &sync.RWMutex{},
+		crt: crt,
+	}
+}
+
+func (cc *certCache) add(name string) (*tls.Certificate, error) {
+	crt, err := cc.crt.Certify(name, certTime)
+	if err != nil {
+		return nil, err
+	}
+
+	cc.mut.Lock()
+	cc.m[name] = &crt
+	cc.mut.Unlock()
+	return &crt, nil
+}
+
+func (cc *certCache) get(name string) (*tls.Certificate, error) {
+	lkr := cc.mut.RLocker()
+	lkr.Lock()
+
+	if c, ok := cc.m[name]; ok {
+		n := time.Now()
+		if n.After(c.Leaf.NotBefore) && n.Before(c.Leaf.NotAfter) {
+			lkr.Unlock()
+			return c, nil
+		}
+	}
+	lkr.Unlock()
+
+	return cc.add(name)
+}
+
 // ListenAndServeTLS mostly mirrors the http.ListenAndServeTLS API, but
 // generates the certificates for the server automatically via vault, with a
 // short TTL. The function only needs an additional Certifier parameter which
 // can generate signed certificates in order to work properly.
 func ListenAndServeTLS(addr string, handler http.Handler, crt Certifier) error {
-	certs := map[string]*tls.Certificate{}
-	certsM := &sync.RWMutex{}
-
-	addCert := func(name string) (*tls.Certificate, error) {
-		log.Println("Generating cert for ", name)
-		crt, err := crt.Certify(name, certTime)
-		if err != nil {
-			return nil, err
-		}
-
-		certsM.Lock()
-		certs[name] = &crt
-		certsM.Unlock()
-		return &crt, nil
-	}
-
-	getCert := func(name string) (*tls.Certificate, error) {
-		lkr := certsM.RLocker()
-		lkr.Lock()
-
-		if c, ok := certs[name]; ok {
-			log.Println(c.Leaf.NotAfter.String())
-			n := time.Now()
-			if n.After(c.Leaf.NotBefore) && n.Before(c.Leaf.NotAfter) {
-				lkr.Unlock()
-				return c, nil
-			}
-		}
-		lkr.Unlock()
-
-		return addCert(name)
-	}
+	certs := newCertCache(crt)
 
 	tl, err := tls.Listen("tcp", addr, &tls.Config{
 		GetCertificate: func(h *tls.ClientHelloInfo) (*tls.Certificate, error) {
 			if h.ServerName == "" {
-				return nil, fmt.Errorf("Cannot generate certs for IP alone")
+				return nil, fmt.Errorf("Cannot generate certs without TLS SNI (no server name was indicated)")
 			}
-			return getCert(h.ServerName)
+			return certs.get(h.ServerName)
 		},
 	})
 
