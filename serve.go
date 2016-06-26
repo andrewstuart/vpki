@@ -12,13 +12,15 @@ var (
 	day  = 24 * time.Hour
 	year = 365 * day
 
-	certTime = time.Minute
+	//DefaultTTL is the default TTL the library will request for certificates
+	DefaultTTL = day
 )
 
 type certCache struct {
 	m   map[string]*tls.Certificate
 	mut *sync.RWMutex
 	crt Certifier
+	ttl time.Duration
 }
 
 func newCertCache(crt Certifier) *certCache {
@@ -26,11 +28,12 @@ func newCertCache(crt Certifier) *certCache {
 		m:   map[string]*tls.Certificate{},
 		mut: &sync.RWMutex{},
 		crt: crt,
+		ttl: DefaultTTL,
 	}
 }
 
 func (cc *certCache) add(name string) (*tls.Certificate, error) {
-	crt, err := cc.crt.Certify(name, certTime)
+	crt, err := cc.crt.Certify(name, cc.ttl)
 	if err != nil {
 		return nil, err
 	}
