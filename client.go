@@ -13,7 +13,7 @@ type Certifier interface {
 	Certify(cn string, ttl time.Duration) (tls.Certificate, error)
 }
 
-type SecretWriter interface {
+type secretWriter interface {
 	Write(string, map[string]interface{}) (*api.Secret, error)
 }
 
@@ -24,7 +24,7 @@ type Client struct {
 	Mount, Role, Addr, Email string
 
 	vc *api.Client
-	sw SecretWriter
+	sw secretWriter
 }
 
 func (c *Client) init() error {
