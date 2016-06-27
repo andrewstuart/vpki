@@ -13,6 +13,10 @@ type Certifier interface {
 	Certify(cn string, ttl time.Duration) (tls.Certificate, error)
 }
 
+type SecretWriter interface {
+	Write(string, map[string]interface{}) (*api.Secret, error)
+}
+
 // Client is the abstraction for a vault client, with convenience methods for
 // obtaining golang tls.Certificates with minimum risk of key disclosure (keys
 // are generated locally then CSRs sent to Vault).
@@ -20,10 +24,11 @@ type Client struct {
 	Mount, Role, Addr, Email string
 
 	vc *api.Client
+	sw SecretWriter
 }
 
-func (c *Client) getVC() (*api.Client, error) {
-	if c.vc == nil {
+func (c *Client) init() error {
+	if c.sw == nil {
 		var err error
 
 		//TODO custom http.Client?
@@ -33,16 +38,18 @@ func (c *Client) getVC() (*api.Client, error) {
 
 		c.vc, err = api.NewClient(cfg)
 		if err != nil {
-			return nil, err
+			return err
 		}
+
+		c.sw = c.vc.Logical()
 	}
 
-	return c.vc, nil
+	return nil
 }
 
 // SetToken sets the Vault token for the Client.
 func (c *Client) SetToken(t string) {
-	c.getVC()
+	c.init()
 	c.vc.SetToken(t)
 }
 
