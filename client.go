@@ -10,7 +10,7 @@ import (
 // Certifier abstracts any object that can provide signed certificates
 // (hopefully valid). The default is expected to be a vtls.Client
 type Certifier interface {
-	Certify(cn string, ttl time.Duration) (tls.Certificate, error)
+	Certify(string, time.Duration, int) (tls.Certificate, error)
 }
 
 type secretWriter interface {

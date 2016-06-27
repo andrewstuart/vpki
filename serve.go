@@ -14,6 +14,8 @@ var (
 
 	//DefaultTTL is the default TTL the library will request for certificates
 	DefaultTTL = day
+	//DefaultStrength is the default strength of RSA keys generated
+	DefaultStrength = 2048
 )
 
 type certCache struct {
@@ -33,7 +35,7 @@ func newCertCache(crt Certifier) *certCache {
 }
 
 func (cc *certCache) add(name string) (*tls.Certificate, error) {
-	crt, err := cc.crt.Certify(name, cc.ttl)
+	crt, err := cc.crt.Certify(name, cc.ttl, DefaultStrength)
 	if err != nil {
 		return nil, err
 	}
