@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/andrewstuart/vtls.svg?branch=master)](https://travis-ci.org/andrewstuart/vtls)
+Travis: [![Build Status](https://travis-ci.org/andrewstuart/vtls.svg?branch=master)](https://travis-ci.org/andrewstuart/vtls)
 
 # vtls
 --
