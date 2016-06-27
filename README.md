@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/andrewstuart/vtls.svg?branch=master)](https://travis-ci.org/andrewstuart/vtls)
+
 # vtls
 --
     import "github.com/andrewstuart/vtls"
@@ -14,6 +16,8 @@ var (
 
 	//DefaultTTL is the default TTL the library will request for certificates
 	DefaultTTL = day
+	//DefaultStrength is the default strength of RSA keys generated
+	DefaultStrength = 2048
 )
 ```
 
@@ -31,7 +35,7 @@ certificates in order to work properly.
 
 ```go
 type Certifier interface {
-	Certify(cn string, ttl time.Duration) (tls.Certificate, error)
+	Certify(string, time.Duration, int) (tls.Certificate, error)
 }
 ```
 
@@ -72,15 +76,6 @@ func (c *Client) SignCSR(csr *x509.CertificateRequest, ttl time.Duration, streng
 ```
 SignCSR takes an CertificateRequest template and ttl, and returns a
 tls.Certificate with a pre-parsed leaf, or an error
-
-#### type SecretWriter
-
-```go
-type SecretWriter interface {
-	Write(string, map[string]interface{}) (*api.Secret, error)
-}
-```
-
 
 #### type VaultError
 
