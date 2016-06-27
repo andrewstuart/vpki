@@ -51,6 +51,7 @@ func (c *Client) init() error {
 func (c *Client) SetToken(t string) {
 	c.init()
 	c.vc.SetToken(t)
+	c.sw = c.vc.Logical()
 }
 
 // // NewClient returns a client configured for the endpoints specified
