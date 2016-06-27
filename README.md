@@ -2,8 +2,19 @@
 --
     import "github.com/andrewstuart/vtls"
 
+Package vtls provides a layer of abstraction between the golang stdlib crypto
+primitives and common crypto uses (e.g. serving HTTPS) and the functionality
+provided by Vault. Internally, the library generates RSA keys locally
 
 ## Usage
+
+```go
+var (
+
+	//DefaultTTL is the default TTL the library will request for certificates
+	DefaultTTL = day
+)
+```
 
 #### func  ListenAndServeTLS
 
@@ -41,10 +52,10 @@ generated locally then CSRs sent to Vault).
 #### func (*Client) Certify
 
 ```go
-func (c *Client) Certify(cn string, ttl time.Duration) (tls.Certificate, error)
+func (c *Client) Certify(cn string, ttl time.Duration, strength int) (tls.Certificate, error)
 ```
-Certify takes a server CommonName and ttl, and returns a tls.Certificate with a
-pre-parsed Leaf, or an error
+Certify takes a server CommonName, ttl, and strength, and returns a
+tls.Certificate with a pre-parsed Leaf, or an error
 
 #### func (*Client) SetToken
 
@@ -56,10 +67,19 @@ SetToken sets the Vault token for the Client.
 #### func (*Client) SignCSR
 
 ```go
-func (c *Client) SignCSR(csr *x509.CertificateRequest, ttl time.Duration) (tls.Certificate, error)
+func (c *Client) SignCSR(csr *x509.CertificateRequest, ttl time.Duration, strength int) (tls.Certificate, error)
 ```
 SignCSR takes an CertificateRequest template and ttl, and returns a
 tls.Certificate with a pre-parsed leaf, or an error
+
+#### type SecretWriter
+
+```go
+type SecretWriter interface {
+	Write(string, map[string]interface{}) (*api.Secret, error)
+}
+```
+
 
 #### type VaultError
 
