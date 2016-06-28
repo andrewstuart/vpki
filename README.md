@@ -1,4 +1,4 @@
-Travis: [![Build Status](https://travis-ci.org/andrewstuart/vtls.svg?branch=master)](https://travis-ci.org/andrewstuart/vtls)
+[![Build Status](https://travis-ci.org/andrewstuart/vtls.svg?branch=master)](https://travis-ci.org/andrewstuart/vtls) [![GoDoc](https://godoc.org/github.com/andrewstuart/vtls?status.svg)](https://godoc.org/github.com/andrewstuart/vtls)
 
 # vtls
 --
@@ -86,6 +86,8 @@ type VaultError struct {
 }
 ```
 
+VaultError is an error originating from a vault client. Errors coming from the
+vtls library should be type checked against this error (use a type switch)
 
 #### func (*VaultError) Error
 
