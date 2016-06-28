@@ -35,18 +35,22 @@ func certFromK(k *rsa.PrivateKey) *x509.Certificate {
 	}
 	subjKeyID := sha1.Sum(marshaledKey)
 	sub := pkix.Name{
-		CommonName: "private.ca.localhost",
+		CommonName:   "private.ca.localhost",
+		Organization: []string{"localhost"},
 	}
+
+	// Stole basic template from a combo of Vault code (cert_utils.go) and here:
+	// https://golang.org/src/crypto/tls/generate_cert.go
 	ctpl := &x509.Certificate{
-		SerialNumber:       big.NewInt(0),
-		Subject:            sub,
-		Issuer:             sub,
-		SubjectKeyId:       subjKeyID[:],
-		NotBefore:          time.Now().Add(-30 * time.Second),
-		NotAfter:           time.Now().Add(5 * time.Minute),
-		SignatureAlgorithm: x509.SHA256WithRSA,
-		IsCA:               true,
-		KeyUsage:           x509.KeyUsage(x509.KeyUsageCertSign | x509.KeyUsageCRLSign),
+		SerialNumber:          big.NewInt(0),
+		Subject:               sub,
+		SubjectKeyId:          subjKeyID[:],
+		NotBefore:             time.Now().Add(-30 * time.Second),
+		NotAfter:              time.Now().Add(5 * time.Minute),
+		IsCA:                  true,
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
 	}
 
 	bs, err := x509.CreateCertificate(rand.Reader, ctpl, ctpl, k.Public(), k)
