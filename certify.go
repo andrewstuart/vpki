@@ -80,5 +80,4 @@ func (c *Client) SignCSR(csr *x509.CertificateRequest, ttl time.Duration, streng
 	}
 
 	return crt, nil
-
 }

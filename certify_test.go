@@ -46,6 +46,7 @@ func certFromK(k *rsa.PrivateKey) *x509.Certificate {
 		NotAfter:           time.Now().Add(5 * time.Minute),
 		SignatureAlgorithm: x509.SHA256WithRSA,
 		IsCA:               true,
+		KeyUsage:           x509.KeyUsage(x509.KeyUsageCertSign | x509.KeyUsageCRLSign),
 	}
 
 	bs, err := x509.CreateCertificate(rand.Reader, ctpl, ctpl, k.Public(), k)
@@ -63,7 +64,6 @@ func certFromK(k *rsa.PrivateKey) *x509.Certificate {
 
 func (tw *testWriter) Write(path string, data map[string]interface{}) (*api.Secret, error) {
 	tw.Path, tw.Data = path, data
-	tw.t.Log("Request to path", path)
 
 	if tw.k == nil {
 		k, err := rsa.GenerateKey(rand.Reader, 2048)
@@ -109,6 +109,7 @@ func (tw *testWriter) Write(path string, data map[string]interface{}) (*api.Secr
 		NotBefore:          time.Now().Add(-30 * time.Second),
 		NotAfter:           time.Now().Add(5 * time.Minute),
 		SignatureAlgorithm: x509.SHA256WithRSA,
+		ExtKeyUsage:        []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 	}
 
 	bs, err := x509.CreateCertificate(rand.Reader, certTemplate, tw.ca, csr.PublicKey, tw.k)
@@ -143,5 +144,14 @@ func TestCertify(t *testing.T) {
 
 	if crt.Leaf.Subject.CommonName != "foo.localhost" {
 		t.Errorf("Wrong subject name returned.")
+	}
+
+	ep := "foo/sign/bar"
+	if tw.Path != ep {
+		t.Errorf("Wrong path was requested: %s (should be %s)", tw.Path, ep)
+	}
+
+	if tw.Data["common_name"].(string) != "foo.localhost" {
+		t.Errorf("Wrong common_name requested: %s", tw.Data["common_name"].(string))
 	}
 }
