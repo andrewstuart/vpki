@@ -1,10 +1,10 @@
-[![Build Status](https://travis-ci.org/andrewstuart/vtls.svg?branch=master)](https://travis-ci.org/andrewstuart/vtls) [![GoDoc](https://godoc.org/github.com/andrewstuart/vtls?status.svg)](https://godoc.org/github.com/andrewstuart/vtls)
+[![Build Status](https://travis-ci.org/andrewstuart/vpki.svg?branch=master)](https://travis-ci.org/andrewstuart/vpki) [![GoDoc](https://godoc.org/github.com/andrewstuart/vpki?status.svg)](https://godoc.org/github.com/andrewstuart/vpki)
 
-# vtls
+# vpki
 --
-    import "github.com/andrewstuart/vtls"
+    import "github.com/andrewstuart/vpki"
 
-Package vtls provides a layer of abstraction between the golang stdlib crypto
+Package vpki provides a layer of abstraction between the golang stdlib crypto
 primitives and common crypto uses (e.g. serving HTTPS) and the functionality
 provided by Vault. Internally, the library generates private keys locally and
 sends CSRs to the vault server, so that private keys are never transmitted.
@@ -40,7 +40,7 @@ type Certifier interface {
 ```
 
 Certifier abstracts any object that can provide signed certificates (hopefully
-valid). The default is expected to be a vtls.Client
+valid). The default is expected to be a vpki.Client
 
 #### type Client
 
@@ -87,7 +87,7 @@ type VaultError struct {
 ```
 
 VaultError is an error originating from a vault client. Errors coming from the
-vtls library should be type checked against this error (use a type switch)
+vpki library should be type checked against this error (use a type switch)
 
 #### func (*VaultError) Error
 

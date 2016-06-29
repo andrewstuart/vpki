@@ -1,4 +1,4 @@
-package vtls
+package vpki
 
 import "testing"
 

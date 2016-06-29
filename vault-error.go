@@ -1,9 +1,9 @@
-package vtls
+package vpki
 
 import "fmt"
 
 // VaultError is an error originating from a vault client. Errors coming from
-// the vtls library should be type checked against this error (use a type
+// the vpki library should be type checked against this error (use a type
 // switch)
 type VaultError struct {
 	Client Client
