@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/andrewstuart/vpki.svg?branch=master)](https://travis-ci.org/andrewstuart/vpki) [![GoDoc](https://godoc.org/github.com/andrewstuart/vpki?status.svg)](https://godoc.org/github.com/andrewstuart/vpki)
+[![Build Status](https://travis-ci.org/andrewstuart/vtls.svg?branch=master)](https://travis-ci.org/andrewstuart/vtls) [![GoDoc](https://godoc.org/github.com/andrewstuart/vtls?status.svg)](https://godoc.org/github.com/andrewstuart/vtls)
 
 # vpki
 --
