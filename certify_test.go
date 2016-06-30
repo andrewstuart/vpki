@@ -127,10 +127,10 @@ func (tw *testWriter) Write(path string, data map[string]interface{}) (*api.Secr
 	return tw.Res, tw.Err
 }
 
+var tw = &testWriter{}
+
 func TestCertify(t *testing.T) {
-	tw := &testWriter{
-		t: t,
-	}
+	tw.t = t
 	cli := Client{
 		Mount: "foo",
 		Role:  "bar",

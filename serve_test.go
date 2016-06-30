@@ -11,7 +11,7 @@ import (
 )
 
 func TestServer(t *testing.T) {
-	tw := &testWriter{t: t}
+	tw.t = t
 	c := &Client{
 		Mount: "plop",
 		Role:  "foo",
