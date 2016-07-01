@@ -2,7 +2,7 @@
 
 # vpki
 --
-    import "github.com/andrewstuart/vpki"
+    import "go.astuart.co/vpki"
 
 Package vpki provides a layer of abstraction between the golang stdlib crypto
 primitives and common crypto uses (e.g. serving HTTPS) and the functionality
@@ -35,18 +35,22 @@ certificates in order to work properly.
 
 ```go
 type Certifier interface {
-	Certify(string, time.Duration, int) (tls.Certificate, error)
+	Cert(cn string) (*tls.Certificate, error)
 }
 ```
 
 Certifier abstracts any object that can provide signed certificates (hopefully
-valid). The default is expected to be a vpki.Client
+valid for their use case). Concrete implementations ought to provide their own
+ways to configure TTL, key strength, etc. The default provided implementation is
+vpki.Client.
 
 #### type Client
 
 ```go
 type Client struct {
 	Mount, Role, Addr, Email string
+	Strength                 int
+	TTL                      time.Duration
 }
 ```
 
@@ -54,13 +58,14 @@ Client is the abstraction for a vault client, with convenience methods for
 obtaining golang tls.Certificates with minimum risk of key disclosure (keys are
 generated locally then CSRs sent to Vault).
 
-#### func (*Client) Certify
+#### func (*Client) Cert
 
 ```go
-func (c *Client) Certify(cn string, ttl time.Duration, strength int) (tls.Certificate, error)
+func (c *Client) Cert(cn string) (*tls.Certificate, error)
 ```
-Certify takes a server CommonName, ttl, and strength, and returns a
-tls.Certificate with a pre-parsed Leaf, or an error
+Certify takes a server CommonName and retruns a tls.Certificate with a
+pre-parsed Leaf, or an error. The strength and ttl for the CSR are determined by
+the Client fields of the same names.
 
 #### func (*Client) SetToken
 
@@ -72,10 +77,37 @@ SetToken sets the Vault token for the Client.
 #### func (*Client) SignCSR
 
 ```go
-func (c *Client) SignCSR(csr *x509.CertificateRequest, ttl time.Duration, strength int) (tls.Certificate, error)
+func (c *Client) SignCSR(csr *x509.CertificateRequest, k *rsa.PrivateKey, ttl time.Duration) (*tls.Certificate, error)
 ```
 SignCSR takes an CertificateRequest template and ttl, and returns a
 tls.Certificate with a pre-parsed leaf, or an error
+
+#### type SNICertifier
+
+```go
+type SNICertifier interface {
+	GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, error)
+}
+```
+
+SNICertifier abstracts the basic GetCertificate method used in TLSOpts, and also
+implemented by libraries like rsc.io/letsencrypt
+
+#### type ValidationError
+
+```go
+type ValidationError struct {
+	Domain   string
+	Original error
+}
+```
+
+
+#### func (*ValidationError) Error
+
+```go
+func (ve *ValidationError) Error() string
+```
 
 #### type VaultError
 

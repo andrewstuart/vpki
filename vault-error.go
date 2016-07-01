@@ -1,4 +1,4 @@
-package vpki
+package vpki // import vpki "go.astuart.co/vpki"
 
 import "fmt"
 
