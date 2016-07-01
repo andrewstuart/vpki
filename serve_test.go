@@ -13,8 +13,10 @@ import (
 func TestServer(t *testing.T) {
 	tw.t = t
 	c := &Client{
-		Mount: "plop",
-		Role:  "foo",
+		Mount:    "plop",
+		Role:     "foo",
+		Strength: 2048,
+		TTL:      time.Hour,
 
 		sw: tw,
 	}
@@ -25,7 +27,7 @@ func TestServer(t *testing.T) {
 		fmt.Fprintf(w, "hello world")
 	})
 
-	c.Certify("foo", time.Second, 1024)
+	c.Cert("foo")
 
 	go func() {
 		err := ListenAndServeTLS(":12346", m, c)

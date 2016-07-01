@@ -35,15 +35,15 @@ func newCertCache(crt Certifier) *certCache {
 }
 
 func (cc *certCache) add(name string) (*tls.Certificate, error) {
-	crt, err := cc.crt.Certify(name, cc.ttl, DefaultStrength)
+	crt, err := cc.crt.Cert(name)
 	if err != nil {
 		return nil, err
 	}
 
 	cc.mut.Lock()
-	cc.m[name] = &crt
+	cc.m[name] = crt
 	cc.mut.Unlock()
-	return &crt, nil
+	return crt, nil
 }
 
 func (cc *certCache) get(name string) (*tls.Certificate, error) {

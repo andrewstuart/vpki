@@ -1,17 +1,10 @@
 package vpki
 
 import (
-	"crypto/tls"
 	"time"
 
 	"github.com/hashicorp/vault/api"
 )
-
-// Certifier abstracts any object that can provide signed certificates
-// (hopefully valid). The default is expected to be a vpki.Client
-type Certifier interface {
-	Certify(string, time.Duration, int) (tls.Certificate, error)
-}
 
 type secretWriter interface {
 	Write(string, map[string]interface{}) (*api.Secret, error)
@@ -22,6 +15,8 @@ type secretWriter interface {
 // are generated locally then CSRs sent to Vault).
 type Client struct {
 	Mount, Role, Addr, Email string
+	Strength                 int
+	TTL                      time.Duration
 
 	vc *api.Client
 	sw secretWriter

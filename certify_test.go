@@ -132,12 +132,14 @@ var tw = &testWriter{}
 func TestCertify(t *testing.T) {
 	tw.t = t
 	cli := Client{
-		Mount: "foo",
-		Role:  "bar",
-		sw:    tw,
+		Mount:    "foo",
+		Role:     "bar",
+		sw:       tw,
+		Strength: 2048,
+		TTL:      time.Second,
 	}
 
-	crt, err := cli.Certify("foo.localhost", time.Second, 2048)
+	crt, err := cli.Cert("foo.localhost")
 	if err != nil {
 		t.Fatalf("Error certifying: %v", err)
 	}

@@ -15,30 +15,46 @@ const (
 	csrName = "CERTIFICATE REQUEST"
 )
 
-var emptyCert = tls.Certificate{}
+type ValidationError struct {
+	Domain   string
+	Original error
+}
 
-// Certify takes a server CommonName, ttl, and strength, and returns a
-// tls.Certificate with a pre-parsed Leaf, or an error
-func (c *Client) Certify(cn string, ttl time.Duration, strength int) (tls.Certificate, error) {
+func (ve *ValidationError) Error() string {
+	return fmt.Sprintf("Error acquiring cert for %s: %s", ve.Domain, ve.Original)
+}
+
+// Certifier abstracts any object that can provide signed certificates
+// (hopefully valid for their use case). Concrete implementations ought to
+// provide their own ways to configure TTL, key strength, etc. The default
+// provided implementation is vpki.Client.
+type Certifier interface {
+	Cert(cn string) (*tls.Certificate, error)
+}
+
+// Certify takes a server CommonName and retruns a tls.Certificate with a
+// pre-parsed Leaf, or an error. The strength and ttl for the CSR are
+// determined by the Client fields of the same names.
+func (c *Client) Cert(cn string) (*tls.Certificate, error) {
+	k, err := rsa.GenerateKey(rand.Reader, c.Strength)
+	if err != nil {
+		return nil, err
+	}
+
 	csr := &x509.CertificateRequest{
 		Subject:        pkix.Name{CommonName: cn},
 		EmailAddresses: []string{c.Email},
 	}
 
-	return c.SignCSR(csr, ttl, strength)
+	return c.SignCSR(csr, k, c.TTL)
 }
 
 // SignCSR takes an CertificateRequest template and ttl, and returns a
 // tls.Certificate with a pre-parsed leaf, or an error
-func (c *Client) SignCSR(csr *x509.CertificateRequest, ttl time.Duration, strength int) (tls.Certificate, error) {
-	k, err := rsa.GenerateKey(rand.Reader, strength)
-	if err != nil {
-		return emptyCert, err
-	}
-
+func (c *Client) SignCSR(csr *x509.CertificateRequest, k *rsa.PrivateKey, ttl time.Duration) (*tls.Certificate, error) {
 	csrBs, err := x509.CreateCertificateRequest(rand.Reader, csr, k)
 	if err != nil {
-		return emptyCert, err
+		return nil, err
 	}
 
 	pemB := &pem.Block{
@@ -59,7 +75,7 @@ func (c *Client) SignCSR(csr *x509.CertificateRequest, ttl time.Duration, streng
 
 	secret, err := c.sw.Write(c.Mount+"/sign/"+c.Role, data)
 	if err != nil {
-		return emptyCert, err
+		return nil, err
 	}
 
 	pubBs := []byte(secret.Data["certificate"].(string))
@@ -71,13 +87,13 @@ func (c *Client) SignCSR(csr *x509.CertificateRequest, ttl time.Duration, streng
 
 	crt, err := tls.X509KeyPair(pubBs, pem.EncodeToMemory(pb))
 	if err != nil {
-		return emptyCert, fmt.Errorf("x509 keypair error: %v", err)
+		return nil, fmt.Errorf("x509 keypair error: %v", err)
 	}
 
 	crt.Leaf, err = x509.ParseCertificate(crt.Certificate[0])
 	if err != nil {
-		return emptyCert, err
+		return nil, err
 	}
 
-	return crt, nil
+	return &crt, nil
 }
