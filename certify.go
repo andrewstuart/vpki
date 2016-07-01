@@ -1,4 +1,4 @@
-package vpki // import "go.astuart.co/vpki"
+package vpki
 
 import (
 	"crypto/rand"
