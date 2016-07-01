@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 )
 
@@ -18,48 +17,10 @@ var (
 	DefaultStrength = 2048
 )
 
-type certCache struct {
-	m   map[string]*tls.Certificate
-	mut *sync.RWMutex
-	crt Certifier
-	ttl time.Duration
-}
-
-func newCertCache(crt Certifier) *certCache {
-	return &certCache{
-		m:   map[string]*tls.Certificate{},
-		mut: &sync.RWMutex{},
-		crt: crt,
-		ttl: DefaultTTL,
-	}
-}
-
-func (cc *certCache) add(name string) (*tls.Certificate, error) {
-	crt, err := cc.crt.Cert(name)
-	if err != nil {
-		return nil, err
-	}
-
-	cc.mut.Lock()
-	cc.m[name] = crt
-	cc.mut.Unlock()
-	return crt, nil
-}
-
-func (cc *certCache) get(name string) (*tls.Certificate, error) {
-	lkr := cc.mut.RLocker()
-	lkr.Lock()
-
-	if c, ok := cc.m[name]; ok {
-		n := time.Now()
-		if n.After(c.Leaf.NotBefore) && n.Before(c.Leaf.NotAfter) {
-			lkr.Unlock()
-			return c, nil
-		}
-	}
-	lkr.Unlock()
-
-	return cc.add(name)
+// SNICertifier abstracts the basic GetCertificate method used in TLSOpts, and
+// also implemented by libraries like rsc.io/letsencrypt
+type SNICertifier interface {
+	GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, error)
 }
 
 // ListenAndServeTLS mostly mirrors the http.ListenAndServeTLS API, but
@@ -71,6 +32,9 @@ func ListenAndServeTLS(addr string, handler http.Handler, crt Certifier) error {
 
 	tl, err := tls.Listen("tcp", addr, &tls.Config{
 		GetCertificate: func(h *tls.ClientHelloInfo) (*tls.Certificate, error) {
+			if crt, ok := crt.(SNICertifier); ok {
+				return crt.GetCertificate(h)
+			}
 			if h.ServerName == "" {
 				return nil, fmt.Errorf("Cannot generate certs without TLS SNI (no server name was indicated)")
 			}
