@@ -1,6 +1,7 @@
 package vpki
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/vault/api"
@@ -17,6 +18,7 @@ type Client struct {
 	Mount, Role, Addr, Email string
 	Strength                 int
 	TTL                      time.Duration
+	HTTPClient               *http.Client
 
 	vc *api.Client
 	sw secretWriter
@@ -26,9 +28,9 @@ func (c *Client) init() error {
 	if c.sw == nil {
 		var err error
 
-		//TODO custom http.Client?
 		cfg := &api.Config{
-			Address: c.Addr,
+			Address:    c.Addr,
+			HttpClient: c.HTTPClient,
 		}
 
 		c.vc, err = api.NewClient(cfg)
