@@ -31,7 +31,7 @@ type Certifier interface {
 	Cert(cn string) (*tls.Certificate, error)
 }
 
-// Certify takes a server CommonName and retruns a tls.Certificate with a
+// Cert takes a server CommonName and retruns a tls.Certificate with a
 // pre-parsed Leaf, or an error. The strength and ttl for the CSR are
 // determined by the Client fields of the same names.
 func (c *Client) Cert(cn string) (*tls.Certificate, error) {

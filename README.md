@@ -63,9 +63,27 @@ generated locally then CSRs sent to Vault).
 ```go
 func (c *Client) Cert(cn string) (*tls.Certificate, error)
 ```
-Certify takes a server CommonName and retruns a tls.Certificate with a
-pre-parsed Leaf, or an error. The strength and ttl for the CSR are determined by
-the Client fields of the same names.
+Cert takes a server CommonName and retruns a tls.Certificate with a pre-parsed
+Leaf, or an error. The strength and ttl for the CSR are determined by the Client
+fields of the same names.
+
+#### func (*Client) RawCert
+
+```go
+func (c *Client) RawCert(cn string) (*RawPair, error)
+```
+RawCert is a very high-level method used to obtain the raw certificate data.
+
+#### func (*Client) RawSignCSR
+
+```go
+func (c *Client) RawSignCSR(csr *x509.CertificateRequest, k *rsa.PrivateKey, ttl time.Duration) (*RawPair, error)
+```
+RawSignCSR takes a certificate request template, private keye, and ttl, and
+returns the private/public keypair, unparsed, for any applications which may
+need to consume the certificates directly in their PEM form. The RawPair struct
+is used to help prevent transposition errors by explicitly naming the
+public/private pairs rather than returning two byte slices.
 
 #### func (*Client) SetToken
 
@@ -80,7 +98,26 @@ SetToken sets the Vault token for the Client.
 func (c *Client) SignCSR(csr *x509.CertificateRequest, k *rsa.PrivateKey, ttl time.Duration) (*tls.Certificate, error)
 ```
 SignCSR takes an CertificateRequest template and ttl, and returns a
-tls.Certificate with a pre-parsed leaf, or an error
+tls.Certificate with a pre-parsed leaf, or an error.
+
+#### type RawPair
+
+```go
+type RawPair struct {
+	Private, Public []byte
+}
+```
+
+RawPair is a simple explicitly-named pair of byte slices returned by the RawPair
+function.
+
+#### func  RawCert
+
+```go
+func RawCert(c Certifier, cn string) (*RawPair, error)
+```
+RawCert is a more-generic function that can take any certifier and return the
+PEM-encoded bytes for a requested common_name.
 
 #### type SNICertifier
 
