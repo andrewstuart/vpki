@@ -50,7 +50,7 @@ func (c *Client) Cert(cn string) (*tls.Certificate, error) {
 }
 
 // SignCSR takes an CertificateRequest template and ttl, and returns a
-// tls.Certificate with a pre-parsed leaf, or an error
+// tls.Certificate with a pre-parsed leaf, or an error.
 func (c *Client) SignCSR(csr *x509.CertificateRequest, k *rsa.PrivateKey, ttl time.Duration) (*tls.Certificate, error) {
 	csrBs, err := x509.CreateCertificateRequest(rand.Reader, csr, k)
 	if err != nil {

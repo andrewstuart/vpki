@@ -1,6 +1,7 @@
 package vpki
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/rsa"
 	"crypto/x509"
@@ -8,16 +9,13 @@ import (
 	"fmt"
 )
 
-// MarshaledPair is a simple explicitly-named pair of byte slices returned by
-// the MarshaledPair function.
-type MarshaledPair struct {
+// RawPair is a simple explicitly-named pair of byte slices returned by
+// the RawPair function.
+type RawPair struct {
 	Private, Public []byte
 }
 
-// MarshaledPair returns a struct containing the Private and Public marshaled
-// keys, useful for writing to disk or usage in a context where PEM-formatted
-// certificates will be used.
-func (c *Client) MarshaledPair(cn string) (*MarshaledPair, error) {
+func (c *Client) RawPair(cn string) (*RawPair, error) {
 	crt, err := c.Cert(cn)
 	if err != nil {
 		return nil, err
@@ -39,12 +37,21 @@ func (c *Client) MarshaledPair(cn string) (*MarshaledPair, error) {
 		return nil, fmt.Errorf("Unsupported private key type")
 	}
 
-	pubbs := []byte{}
-
-	for _, pub := range crt.Certificate {
-		pubbs = append(pubbs, pub...)
-		pubbs = append(pubbs, '\n')
+	crts, err := x509.ParseCertificates(bytes.Join(crt.Certificate, []byte{}))
+	if err != nil {
+		return nil, fmt.Errorf("Error parsing x509 certs from tls.Certificate{}.Certificate", err)
 	}
 
-	return &MarshaledPair{Private: pkbs, Public: pubbs}, nil
+	pubbs := []byte{}
+
+	for _, crt := range crts {
+		bs, err := x509.MarshalPKIXPublicKey(crt.PublicKey)
+		if err != nil {
+			return nil, fmt.Errorf("Error marshling pkix public key", err)
+		}
+
+		pubbs = append(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: bs}), pubbs...)
+	}
+
+	return &RawPair{Private: pkbs, Public: pubbs}, nil
 }
