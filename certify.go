@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/pem"
 	"fmt"
 	"time"
 )
@@ -36,56 +35,35 @@ type Certifier interface {
 // pre-parsed Leaf, or an error. The strength and ttl for the CSR are
 // determined by the Client fields of the same names.
 func (c *Client) Cert(cn string) (*tls.Certificate, error) {
-	k, err := rsa.GenerateKey(rand.Reader, c.Strength)
+	csr, k, err := c.getCSR(cn)
 	if err != nil {
 		return nil, err
 	}
+	return c.SignCSR(csr, k, c.TTL)
+}
 
-	csr := &x509.CertificateRequest{
-		Subject:        pkix.Name{CommonName: cn},
-		EmailAddresses: []string{c.Email},
+func (c *Client) getCSR(cn string) (*x509.CertificateRequest, *rsa.PrivateKey, error) {
+	k, err := rsa.GenerateKey(rand.Reader, c.Strength)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return c.SignCSR(csr, k, c.TTL)
+	return &x509.CertificateRequest{
+		Subject:        pkix.Name{CommonName: cn},
+		EmailAddresses: []string{c.Email},
+	}, k, nil
+
 }
 
 // SignCSR takes an CertificateRequest template and ttl, and returns a
 // tls.Certificate with a pre-parsed leaf, or an error.
 func (c *Client) SignCSR(csr *x509.CertificateRequest, k *rsa.PrivateKey, ttl time.Duration) (*tls.Certificate, error) {
-	csrBs, err := x509.CreateCertificateRequest(rand.Reader, csr, k)
+	raw, err := c.RawSignCSR(csr, k, ttl)
 	if err != nil {
 		return nil, err
 	}
 
-	pemB := &pem.Block{
-		Type:  csrName,
-		Bytes: csrBs,
-	}
-
-	data := map[string]interface{}{
-		"csr":         string(pem.EncodeToMemory(pemB)),
-		"common_name": csr.Subject.CommonName,
-		"format":      "pem_bundle",
-		"ttl":         ttl.String(),
-	}
-
-	if c.sw == nil {
-		c.init()
-	}
-
-	secret, err := c.sw.Write(c.Mount+"/sign/"+c.Role, data)
-	if err != nil {
-		return nil, err
-	}
-
-	pubBs := []byte(secret.Data["certificate"].(string))
-
-	pb := &pem.Block{
-		Bytes: x509.MarshalPKCS1PrivateKey(k),
-		Type:  "RSA PRIVATE KEY",
-	}
-
-	crt, err := tls.X509KeyPair(pubBs, pem.EncodeToMemory(pb))
+	crt, err := tls.X509KeyPair(raw.Public, raw.Private)
 	if err != nil {
 		return nil, fmt.Errorf("x509 keypair error: %v", err)
 	}
