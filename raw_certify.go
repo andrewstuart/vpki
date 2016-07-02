@@ -31,8 +31,8 @@ func (c *Client) RawSignCSR(csr *x509.CertificateRequest, k *rsa.PrivateKey, ttl
 	}
 
 	return &RawPair{Public: pubBs, Private: pem.EncodeToMemory(&pem.Block{
-		Bytes: x509.MarshalPKCS1PrivateKey(k),
 		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(k),
 	})}, nil
 }
 
