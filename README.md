@@ -1,8 +1,8 @@
-[![Build Status](https://travis-ci.org/andrewstuart/vpki.svg?branch=master)](https://travis-ci.org/andrewstuart/vpki) [![GoDoc](https://godoc.org/go.astuart.co/vpki?status.svg)](https://godoc.org/go.astuart.co/vpki)
+[![Build Status](https://travis-ci.org/andrewstuart/vpki.svg?branch=master)](https://travis-ci.org/andrewstuart/vpki) [![GoDoc](https://godoc.org/astuart.co/vpki?status.svg)](https://godoc.org/astuart.co/vpki)
 
 # vpki
 --
-    import "go.astuart.co/vpki"
+    import "astuart.co/vpki"
 
 Package vpki provides a layer of abstraction between the golang stdlib crypto
 primitives and common crypto uses (e.g. serving HTTPS) and the functionality
@@ -51,6 +51,7 @@ type Client struct {
 	Mount, Role, Addr, Email string
 	Strength                 int
 	TTL                      time.Duration
+	HTTPClient               *http.Client
 }
 ```
 
