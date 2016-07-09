@@ -3,4 +3,4 @@
 // functionality provided by Vault. Internally, the library generates private
 // keys locally and sends CSRs to the vault server, so that private keys are
 // never transmitted.
-package vpki
+package vpki // import "astuart.co/vpki"
