@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -15,7 +17,16 @@ var (
 	DefaultTTL = day
 	//DefaultStrength is the default strength of RSA keys generated
 	DefaultStrength = 2048
+
+	promVPKICertError = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "vpki_cert_error",
+		Help: "vpki encountered an error obtaining a certificate",
+	}, []string{"server_name"})
 )
+
+func init() {
+	prometheus.MustRegister(promVPKICertError)
+}
 
 // SNICertifier abstracts the basic GetCertificate method used in TLSOpts, and
 // also implemented by libraries like rsc.io/letsencrypt
@@ -35,10 +46,16 @@ func ListenAndServeTLS(addr string, handler http.Handler, crt Certifier) error {
 			if crt, ok := crt.(SNICertifier); ok {
 				return crt.GetCertificate(h)
 			}
+			pl := prometheus.Labels{"server_name": h.ServerName}
 			if h.ServerName == "" {
+				promVPKICertError.With(pl).Inc()
 				return nil, fmt.Errorf("Cannot generate certs without TLS SNI (no server name was indicated)")
 			}
-			return certs.get(h.ServerName)
+			crt, err := certs.get(h.ServerName)
+			if err != nil {
+				promVPKICertError.With(pl).Inc()
+			}
+			return crt, err
 		},
 	})
 
