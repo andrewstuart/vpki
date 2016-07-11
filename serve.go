@@ -42,20 +42,26 @@ func ListenAndServeTLS(addr string, handler http.Handler, crt Certifier) error {
 	certs := newCertCache(crt)
 
 	tl, err := tls.Listen("tcp", addr, &tls.Config{
-		GetCertificate: func(h *tls.ClientHelloInfo) (*tls.Certificate, error) {
-			if crt, ok := crt.(SNICertifier); ok {
-				return crt.GetCertificate(h)
-			}
+		GetCertificate: func(h *tls.ClientHelloInfo) (c *tls.Certificate, err error) {
 			pl := prometheus.Labels{"server_name": h.ServerName}
+			defer func() {
+				if err != nil {
+					promVPKICertError.With(pl).Inc()
+				}
+			}()
+
+			if crt, ok := crt.(SNICertifier); ok {
+				c, err = crt.GetCertificate(h)
+				return
+			}
+
 			if h.ServerName == "" {
-				promVPKICertError.With(pl).Inc()
-				return nil, fmt.Errorf("Cannot generate certs without TLS SNI (no server name was indicated)")
+				err = fmt.Errorf("Cannot generate certs without TLS SNI (no server name was indicated)")
+				return
 			}
-			crt, err := certs.get(h.ServerName)
-			if err != nil {
-				promVPKICertError.With(pl).Inc()
-			}
-			return crt, err
+
+			c, err = certs.get(h.ServerName)
+			return
 		},
 	})
 
