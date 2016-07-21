@@ -41,36 +41,36 @@ type SNICertifier interface {
 func ListenAndServeTLS(addr string, handler http.Handler, crt Certifier) error {
 	certs := newCertCache(crt)
 
-	tl, err := tls.Listen("tcp", addr, &tls.Config{
-		GetCertificate: func(h *tls.ClientHelloInfo) (c *tls.Certificate, err error) {
-			defer func() {
-				if err != nil {
-					promVPKICertError.With(prometheus.Labels{"server_name": h.ServerName}).Inc()
-				}
-			}()
-
-			if h.ServerName == "" {
-				err = fmt.Errorf("Cannot generate certs without TLS SNI (no server name was indicated)")
-				return
-			}
-
-			if crt, ok := crt.(SNICertifier); ok {
-				c, err = crt.GetCertificate(h)
-				return
-			}
-
-			c, err = certs.get(h.ServerName)
-			return
-		},
-	})
-
-	if err != nil {
-		return err
-	}
-
 	if handler == nil {
 		handler = http.DefaultServeMux
 	}
 
-	return http.Serve(tl, handler)
+	s := http.Server{
+		Addr:    addr,
+		Handler: handler,
+		TLSConfig: &tls.Config{
+			GetCertificate: func(h *tls.ClientHelloInfo) (c *tls.Certificate, err error) {
+				defer func() {
+					if err != nil {
+						promVPKICertError.With(prometheus.Labels{"server_name": h.ServerName}).Inc()
+					}
+				}()
+
+				if h.ServerName == "" {
+					err = fmt.Errorf("Cannot generate certs without TLS SNI (no server name was indicated)")
+					return
+				}
+
+				if crt, ok := crt.(SNICertifier); ok {
+					c, err = crt.GetCertificate(h)
+					return
+				}
+
+				c, err = certs.get(h.ServerName)
+				return
+			},
+		},
+	}
+
+	return s.ListenAndServeTLS("", "")
 }
