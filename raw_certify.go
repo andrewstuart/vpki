@@ -25,7 +25,7 @@ func (c *Client) RawSignCSR(csr *x509.CertificateRequest, k *rsa.PrivateKey, ttl
 		return nil, err
 	}
 
-	pubBs, err := c.RawSignCSRBytes(csrBs, csr.Subject.CommonName, ttl)
+	pubBs, err := c.rawCSR(csrBs, csr.Subject.CommonName, ttl)
 	if err != nil {
 		return nil, err
 	}
@@ -45,16 +45,21 @@ func (c *Client) RawCert(cn string) (*RawPair, error) {
 	return c.RawSignCSR(csr, k, c.TTL)
 }
 
+func (c *Client) rawCSR(csr []byte, cn string, ttl time.Duration) ([]byte, error) {
+	pemB := &pem.Block{
+		Bytes: csr,
+		Type:  csrName,
+	}
+
+	return c.RawSignCSRBytes(pem.EncodeToMemory(pemB), cn, ttl)
+}
+
 //RawSignCSRBytes takes the bytes of a Certificate Signing Request, the CN and
 //the ttl, and returns raw bytes of the signed certificate bundle.
 func (c *Client) RawSignCSRBytes(csr []byte, cn string, ttl time.Duration) ([]byte, error) {
-	pemB := &pem.Block{
-		Type:  csrName,
-		Bytes: csr,
-	}
 
 	data := map[string]interface{}{
-		"csr":         string(pem.EncodeToMemory(pemB)),
+		"csr":         string(csr),
 		"common_name": cn,
 		"format":      "pem_bundle",
 		"ttl":         ttl.String(),

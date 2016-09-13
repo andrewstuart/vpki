@@ -25,6 +25,10 @@ type Client struct {
 }
 
 func (c *Client) init() error {
+	if c.Strength == 0 {
+		c.Strength = 2048
+	}
+
 	if c.sw == nil {
 		var err error
 
