@@ -7,7 +7,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
-	"time"
 )
 
 const (
@@ -53,25 +52,4 @@ func (c *Client) getCSR(cn string) (*x509.CertificateRequest, *rsa.PrivateKey, e
 		EmailAddresses: []string{c.Email},
 	}, k, nil
 
-}
-
-// SignCSR takes an CertificateRequest template and ttl, and returns a
-// tls.Certificate with a pre-parsed leaf, or an error.
-func (c *Client) SignCSR(csr *x509.CertificateRequest, k *rsa.PrivateKey, ttl time.Duration) (*tls.Certificate, error) {
-	raw, err := c.RawSignCSR(csr, k, ttl)
-	if err != nil {
-		return nil, err
-	}
-
-	crt, err := tls.X509KeyPair(raw.Public, raw.Private)
-	if err != nil {
-		return nil, fmt.Errorf("x509 keypair error: %v", err)
-	}
-
-	crt.Leaf, err = x509.ParseCertificate(crt.Certificate[0])
-	if err != nil {
-		return nil, err
-	}
-
-	return &crt, nil
 }

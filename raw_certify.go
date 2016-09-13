@@ -25,7 +25,7 @@ func (c *Client) RawSignCSR(csr *x509.CertificateRequest, k *rsa.PrivateKey, ttl
 		return nil, err
 	}
 
-	pubBs, err := c.rawPub(csrBs, csr.Subject.CommonName, ttl)
+	pubBs, err := c.RawSignCSRBytes(csrBs, csr.Subject.CommonName, ttl)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (c *Client) RawCert(cn string) (*RawPair, error) {
 	return c.RawSignCSR(csr, k, c.TTL)
 }
 
-func (c *Client) rawPub(csr []byte, cn string, ttl time.Duration) ([]byte, error) {
+func (c *Client) RawSignCSRBytes(csr []byte, cn string, ttl time.Duration) ([]byte, error) {
 	pemB := &pem.Block{
 		Type:  csrName,
 		Bytes: csr,
