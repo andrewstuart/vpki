@@ -45,6 +45,8 @@ func (c *Client) RawCert(cn string) (*RawPair, error) {
 	return c.RawSignCSR(csr, k, c.TTL)
 }
 
+//RawSignCSRBytes takes the bytes of a Certificate Signing Request, the CN and
+//the ttl, and returns raw bytes of the signed certificate bundle.
 func (c *Client) RawSignCSRBytes(csr []byte, cn string, ttl time.Duration) ([]byte, error) {
 	pemB := &pem.Block{
 		Type:  csrName,
