@@ -41,6 +41,17 @@ func (c *Client) Cert(cn string) (*tls.Certificate, error) {
 	return c.SignCSR(csr, k, c.TTL)
 }
 
+// GenCert takes a CertificateRequest template, generates a key, obtains a
+// signed certificate, and returns the lot
+func (c *Client) GenCert(template *x509.CertificateRequest) (*RawPair, error) {
+	k, err := rsa.GenerateKey(rand.Reader, c.Strength)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.RawSignCSR(template, k, c.TTL)
+}
+
 func (c *Client) getCSR(cn string) (*x509.CertificateRequest, *rsa.PrivateKey, error) {
 	k, err := rsa.GenerateKey(rand.Reader, c.Strength)
 	if err != nil {
@@ -51,5 +62,4 @@ func (c *Client) getCSR(cn string) (*x509.CertificateRequest, *rsa.PrivateKey, e
 		Subject:        pkix.Name{CommonName: cn},
 		EmailAddresses: []string{c.Email},
 	}, k, nil
-
 }
