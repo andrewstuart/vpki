@@ -69,7 +69,7 @@ func (c *Client) RawSignCSRBytes(csr []byte, cn string, ttl time.Duration) ([]by
 		c.init()
 	}
 
-	secret, err := c.sw.Write(c.Mount+"/sign/"+c.Role, data)
+	secret, err := c.sw.Write(c.Mount+"/sign-verbatim/"+c.Role, data)
 	if err != nil {
 		return nil, err
 	}
