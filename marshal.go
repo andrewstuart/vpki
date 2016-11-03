@@ -9,10 +9,15 @@ import (
 	"fmt"
 )
 
+// RawCertifier is an interface implemented by types that can give back a RawPair
+type RawCertifier interface {
+	RawCert(string) (*RawPair, error)
+}
+
 // RawCert is a more-generic function that can take any certifier and return
 // the PEM-encoded bytes for a requested common_name.
 func RawCert(c Certifier, cn string) (*RawPair, error) {
-	if c, ok := c.(*Client); ok {
+	if c, ok := c.(RawCertifier); ok {
 		// Short path for Vault Client, where we know the RawCert can be obtained
 		// directly
 		if c == nil {

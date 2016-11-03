@@ -13,6 +13,7 @@ const (
 	csrName = "CERTIFICATE REQUEST"
 )
 
+// ValidationError is a structured type that contains additional error context.
 type ValidationError struct {
 	Domain   string
 	Original error
@@ -28,6 +29,23 @@ func (ve *ValidationError) Error() string {
 // provided implementation is vpki.Client.
 type Certifier interface {
 	Cert(cn string) (*tls.Certificate, error)
+}
+
+// RawMarshaler abstracts a RawCertifier and offers to return parsed
+// tls.Certificates
+type RawMarshaler struct {
+	RawCertifier
+}
+
+// Cert uses the original interface's RawCert method and returns a
+// tls.Certificate
+func (r *RawMarshaler) Cert(cn string) (*tls.Certificate, error) {
+	pair, err := r.RawCertifier.RawCert(cn)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseRawPair(pair)
 }
 
 // Cert takes a server CommonName and retruns a tls.Certificate with a
