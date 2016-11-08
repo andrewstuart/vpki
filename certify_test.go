@@ -152,7 +152,7 @@ func TestCertify(t *testing.T) {
 		t.Errorf("Wrong subject name returned.")
 	}
 
-	ep := "foo/sign-verbatim/bar"
+	ep := "foo/sign/bar"
 	if tw.Path != ep {
 		t.Errorf("Wrong path was requested: %s (should be %s)", tw.Path, ep)
 	}
