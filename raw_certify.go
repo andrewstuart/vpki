@@ -6,6 +6,8 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"time"
+
+	"github.com/hashicorp/vault/api"
 )
 
 // RawPair is a simple explicitly-named pair of byte slices returned by
@@ -54,6 +56,10 @@ func (c *Client) rawCSR(csr []byte, cn string, ttl time.Duration) ([]byte, error
 	return c.RawSignCSRBytes(pem.EncodeToMemory(pemB), cn, ttl)
 }
 
+func (c *Client) write(path string, data map[string]interface{}) (*api.Secret, error) {
+	return c.sw.Write(c.Mount+"/"+path, data)
+}
+
 //RawSignCSRBytes takes the bytes of a Certificate Signing Request, the CN and
 //the ttl, and returns raw bytes of the signed certificate bundle.
 func (c *Client) RawSignCSRBytes(csr []byte, cn string, ttl time.Duration) ([]byte, error) {
@@ -69,7 +75,7 @@ func (c *Client) RawSignCSRBytes(csr []byte, cn string, ttl time.Duration) ([]by
 		c.init()
 	}
 
-	secret, err := c.sw.Write(c.Mount+"/sign/"+c.Role, data)
+	secret, err := c.write("sign-verbatim", data)
 	if err != nil {
 		return nil, err
 	}
