@@ -75,12 +75,30 @@ func (c *Client) RawSignCSRBytes(csr []byte, cn string, ttl time.Duration) ([]by
 		c.init()
 	}
 
-	role := ""
-	if c.Role != "" {
-		role = c.Role + "/"
+	secret, err := c.write("sign", data)
+	if err != nil {
+		return nil, err
 	}
 
-	secret, err := c.write(role+"sign-verbatim", data)
+	return []byte(secret.Data["certificate"].(string)), nil
+}
+
+//RawSignIntermediateCSRBytes takes the bytes of a Certificate Signing Request, the CN and
+//the ttl, and returns raw bytes of the signed certificate bundle.
+func (c *Client) RawSignIntermediateCSRBytes(csr []byte, cn string, ttl time.Duration) ([]byte, error) {
+
+	data := map[string]interface{}{
+		"csr":         string(csr),
+		"common_name": cn,
+		"format":      "pem_bundle",
+		"ttl":         ttl.String(),
+	}
+
+	if c.sw == nil {
+		c.init()
+	}
+
+	secret, err := c.write("sign-intermediate", data)
 	if err != nil {
 		return nil, err
 	}
