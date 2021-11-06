@@ -88,10 +88,11 @@ func (c *Client) RawSignCSRBytes(csr []byte, cn string, ttl time.Duration) ([]by
 func (c *Client) RawSignIntermediateCSRBytes(csr []byte, cn string, ttl time.Duration) ([]byte, error) {
 
 	data := map[string]interface{}{
-		"csr":         string(csr),
-		"common_name": cn,
-		"format":      "pem_bundle",
-		"ttl":         ttl.String(),
+		"csr":            string(csr),
+		"use_csr_values": true,
+		"common_name":    cn,
+		"format":         "pem_bundle",
+		"ttl":            ttl.String(),
 	}
 
 	if c.sw == nil {
