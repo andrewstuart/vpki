@@ -60,6 +60,10 @@ func (c *Client) write(path string, data map[string]interface{}) (*api.Secret, e
 	return c.sw.Write(c.Mount+"/"+path, data)
 }
 
+func (c *Client) writeRole(path string, data map[string]interface{}) (*api.Secret, error) {
+	return c.sw.Write(c.Mount+"/"+c.Role+"/"+path, data)
+}
+
 //RawSignCSRBytes takes the bytes of a Certificate Signing Request, the CN and
 //the ttl, and returns raw bytes of the signed certificate bundle.
 func (c *Client) RawSignCSRBytes(csr []byte, cn string, ttl time.Duration) ([]byte, error) {
@@ -75,7 +79,7 @@ func (c *Client) RawSignCSRBytes(csr []byte, cn string, ttl time.Duration) ([]by
 		c.init()
 	}
 
-	secret, err := c.write("sign", data)
+	secret, err := c.writeRole("sign", data)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +103,7 @@ func (c *Client) RawSignIntermediateCSRBytes(csr []byte, cn string, ttl time.Dur
 		c.init()
 	}
 
-	secret, err := c.write("sign-intermediate", data)
+	secret, err := c.writeRole("sign-intermediate", data)
 	if err != nil {
 		return nil, err
 	}
