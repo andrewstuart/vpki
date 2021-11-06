@@ -103,7 +103,7 @@ func (c *Client) RawSignIntermediateCSRBytes(csr []byte, cn string, ttl time.Dur
 		c.init()
 	}
 
-	secret, err := c.writeRole("sign-intermediate", data)
+	secret, err := c.write("root/sign-intermediate", data)
 	if err != nil {
 		return nil, err
 	}
